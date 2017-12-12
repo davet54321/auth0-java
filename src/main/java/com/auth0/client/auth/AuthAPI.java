@@ -4,6 +4,8 @@ import com.auth0.json.auth.UserInfo;
 import com.auth0.net.*;
 import com.auth0.utils.Asserts;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.net.Proxy;
+import java.net.InetSocketAddress;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -61,10 +63,19 @@ public class AuthAPI {
         telemetry = new TelemetryInterceptor();
         logging = new HttpLoggingInterceptor();
         logging.setLevel(Level.NONE);
-        client = new OkHttpClient.Builder()
-                .addInterceptor(logging)
-                .addInterceptor(telemetry)
-                .build();
+        
+        OkHttpClient.Builder builder = new OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .addInterceptor(telemetry);
+        
+        String proxy = System.getenv("AUTH0JAVAPROXY");
+        if (proxy != null) {
+            String[] parts = proxy.split(":");
+            int port = Integer.parseInt(parts[1]);
+            builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(parts[0], port)));
+        }
+
+        client = builder.build();
     }
 
     /**
